@@ -1,15 +1,12 @@
-import { useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { ArrowUpRight, ArrowRight, Shield, Sparkles, Phone, MessageCircle, MapPin, Clock, Heart, Star } from "lucide-react"
 import {
-  ZONES,
   ABSOLUTE_CONTRA,
   RELATIVE_CONTRA,
   PRE_CARE,
   AFTER_CARE,
   CONTACTS,
   SLOGAN,
-  type PreCareItem,
 } from "@/lib/data"
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -31,7 +28,7 @@ const features = [
 ]
 
 const services = [
-  { name: "Лазерная эпиляция", price: "от 500 ₽", desc: "Diode лазер — эффективно и безопасно для всех зон. Результат уже после первого сеанса.", accent: true },
+  { name: "Лазерная эпиляция", price: "от 500 ₽", desc: "Diode лазер — эффективно и безопасно для всех зон. Результат уже после первого сеанса." },
   { name: "Восковая эпиляция", price: "от 400 ₽", desc: "Классический метод для быстрого результата. Подходит для всех зон тела." },
   { name: "Сахарная эпиляция", price: "от 400 ₽", desc: "Натуральный состав, мягкое удаление. Идеально для чувствительной кожи." },
   { name: "Массаж лица", price: "800 ₽", desc: "Антивозрастной массаж — подтяжка, контур, сияние кожи." },
@@ -40,17 +37,7 @@ const services = [
 ]
 
 export default function App() {
-  const [selectedZones, setSelectedZones] = useState<string[]>([])
-  const [expandedPrep, setExpandedPrep] = useState(false)
   const reduce = useReducedMotion()
-
-  const toggleZone = (id: string) =>
-    setSelectedZones((p) => (p.includes(id) ? p.filter((z) => z !== id) : [...p, id]))
-
-  const isZoneRelevant = (zones?: string[]) => {
-    if (!zones || zones.length === 0) return false
-    return zones.some((z) => selectedZones.includes(z))
-  }
 
   const r = (delay: number) => rise(delay, reduce)
 
@@ -119,10 +106,10 @@ export default function App() {
         <div className="container-x py-6 md:py-8">
           <div className="grid grid-cols-2 gap-px md:grid-cols-4">
             {features.map((f, i) => (
-              <motion.div key={f.title} className="flex flex-col gap-2 p-6 md:p-8" {...r(0.06 * i)}>
-                <f.icon className="size-5 text-accent" strokeWidth={1.5} />
-                <h3 className="text-sm font-medium">{f.title}</h3>
-                <p className="text-xs leading-relaxed text-soft">{f.text}</p>
+              <motion.div key={f.title} className="flex flex-col gap-3 p-7 md:p-10" {...r(0.06 * i)}>
+                <f.icon className="size-6 text-accent" strokeWidth={1.5} />
+                <h3 className="text-base font-medium">{f.title}</h3>
+                <p className="text-sm leading-relaxed text-soft">{f.text}</p>
               </motion.div>
             ))}
           </div>
@@ -144,26 +131,20 @@ export default function App() {
             {services.map((s, i) => (
               <motion.div
                 key={s.name}
-                className={`group flex flex-col gap-4 p-7 transition-shadow duration-500 hover:shadow-[0_16px_60px_rgba(107,45,62,0.08)] ${
-                  s.accent ? "bg-ink text-paper" : "hairline"
-                }`}
+                className="group flex flex-col gap-4 p-7 hairline transition-shadow duration-500 hover:shadow-[0_16px_60px_rgba(107,45,62,0.08)]"
                 {...r(0.06 * i)}
               >
                 <div className="flex items-baseline justify-between gap-4">
-                  <h3 className={s.accent ? "text-paper" : ""}>{s.name}</h3>
-                  <span className={`label shrink-0 ${s.accent ? "text-paper/60" : "text-accent"}`}>{s.price}</span>
+                  <h3>{s.name}</h3>
+                  <span className="label shrink-0 text-accent">{s.price}</span>
                 </div>
-                <p className={`text-sm leading-relaxed ${s.accent ? "text-paper/70" : "text-soft"}`}>{s.desc}</p>
+                <p className="text-sm leading-relaxed text-soft">{s.desc}</p>
                 <div className="mt-auto pt-4">
                   <a
                     href={CONTACTS.whatsapp}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${
-                      s.accent
-                        ? "text-paper/80 hover:text-paper"
-                        : "text-accent hover:text-accent-hover"
-                    }`}
+                    className="inline-flex items-center gap-2 text-sm text-accent transition-colors hover:text-accent-hover"
                   >
                     Записаться
                     <ArrowUpRight className="size-3.5" />
@@ -246,26 +227,19 @@ export default function App() {
             <div {...r(0.05)}>
               <h3 className="mb-6 text-accent">До процедуры</h3>
               <div>
-                {PRE_CARE.map((item, i) => {
-                  const relevant = isZoneRelevant(item.zones)
-                  const showNote = item.note && (selectedZones.length === 0 || relevant)
-                  return (
-                    <div key={i} className={`hairline-t py-5 transition-colors duration-500 ${relevant ? "bg-accent-tint px-4 -mx-4" : ""}`}>
+                {PRE_CARE.map((item, i) => (
+                    <div key={i} className="hairline-t py-5">
                       <div className="flex items-baseline gap-4">
                         <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
                         <div className="max-w-[56ch]">
                           <p className="text-sm leading-relaxed">{item.text}</p>
-                          {showNote && (
+                          {item.note && (
                             <p className="mt-1.5 text-xs italic text-soft">* {item.note}</p>
                           )}
                         </div>
-                        {relevant && (
-                          <span className="label shrink-0 text-accent">ваша зона</span>
-                        )}
                       </div>
                     </div>
-                  )
-                })}
+                  ))}
               </div>
             </div>
 
@@ -281,28 +255,6 @@ export default function App() {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-
-          {/* Zone picker for filtering */}
-          <div className="mt-12 hairline-t pt-8">
-            <p className="label mb-4 text-faint">Выберите ваши зоны — подсветим подходящие пункты</p>
-            <div className="flex flex-wrap gap-2">
-              {ZONES.map((z) => {
-                const active = selectedZones.includes(z.id)
-                return (
-                  <button
-                    key={z.id}
-                    type="button"
-                    onClick={() => toggleZone(z.id)}
-                    className={`min-h-10 px-4 py-2 text-sm transition-colors duration-300 ${
-                      active ? "bg-ink text-paper" : "hairline hover:border-ink-faint"
-                    }`}
-                  >
-                    {z.name}
-                  </button>
-                )
-              })}
             </div>
           </div>
         </div>
