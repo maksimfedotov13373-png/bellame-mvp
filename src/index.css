@@ -1,98 +1,191 @@
 @import "tailwindcss";
 
 @theme {
-  --color-lavender: #E8E0F0;
-  --color-lavender-deep: #D4C4E8;
-  --color-purple: #7B5EA7;
-  --color-purple-dark: #5A3D8A;
-  --color-purple-light: #F3EFF8;
-  --color-violet: #9B7CC8;
-  --color-cream: #FDFCFA;
-  --color-cream-warm: #FAF8F5;
-  --color-graphite: #1A1A2E;
-  --color-graphite-soft: #6B6B80;
-  --color-border: #E8E4EF;
-  --color-glass: rgba(255, 255, 255, 0.6);
-  --color-glass-border: rgba(255, 255, 255, 0.3);
-
-  --font-heading: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-full: 9999px;
+  --color-paper: #F4F1EC;
+  --color-paper-deep: #ECE7DF;
+  --color-ink: #24201C;
+  --color-ink-soft: #6B6159;
+  --color-ink-faint: #8C847C;
+  --color-accent: #A63A50;
+  --color-hairline: rgba(36, 32, 28, 0.16);
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+  --ease-ai: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
-    font-family: var(--font-sans);
   }
   body {
-    background: var(--color-cream);
-    color: var(--color-graphite);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    text-wrap: balance;
+    hyphens: none;
+  }
+  h1 {
+    font-size: clamp(2.6rem, 8vw, 8.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  h2 {
+    font-size: clamp(2rem, 5.5vw, 4.75rem);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+  }
+  h3 {
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  p {
+    font-size: clamp(0.9375rem, 1.1vw, 1.0625rem);
+    line-height: 1.6;
+    max-width: 56ch;
+    text-wrap: pretty;
+  }
+  a, button {
+    -webkit-tap-highlight-color: transparent;
+  }
   ::selection {
-    background: rgba(123, 94, 167, 0.2);
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
   }
 }
 
-.container-x {
-  width: 100%;
-  max-width: 1100px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+@layer components {
+  .label {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+
+  .btn {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    min-height: 44px;
+    padding: 0.85rem 1.9rem;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transform: translateZ(0);
+    transition: transform 620ms var(--ease-ai), box-shadow 620ms var(--ease-ai);
+  }
+  .btn__fill {
+    position: absolute;
+    inset: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 500ms var(--ease-ai);
+  }
+  .btn:hover .btn__fill {
+    transform: scaleX(1);
+  }
+  .btn__label {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: color 320ms var(--ease-ai);
+  }
+  .btn__arrow {
+    transition: transform 520ms var(--ease-ai);
+  }
+  .btn:hover .btn__arrow {
+    transform: translateX(4px);
+  }
+  .btn:active {
+    transform: scale(0.985);
+  }
+
+  .btn-solid {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .btn-solid .btn__fill {
+    background: var(--color-accent);
+  }
+
+  .btn-outline {
+    border: 1px solid rgba(36, 32, 28, 0.25);
+    color: var(--color-ink);
+  }
+  .btn-outline .btn__fill {
+    background: var(--color-ink);
+  }
+  .btn-outline:hover .btn__label {
+    color: var(--color-paper);
+  }
 }
 
-@media (min-width: 640px) {
+@layer utilities {
   .container-x {
-    padding-left: 2rem;
-    padding-right: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 3rem);
+  }
+  .hairline-b {
+    border-bottom: 1px solid var(--color-hairline);
+  }
+  .hairline-t {
+    border-top: 1px solid var(--color-hairline);
+  }
+  .hairline {
+    border: 1px solid var(--color-hairline);
+  }
+  .text-soft {
+    color: var(--color-ink-soft);
+  }
+  .text-faint {
+    color: var(--color-ink-faint);
+  }
+  .text-accent {
+    color: var(--color-accent);
+  }
+  .bg-accent {
+    background: var(--color-accent);
+  }
+  .bg-paper-deep {
+    background: var(--color-paper-deep);
+  }
+  .bg-ink {
+    background: var(--color-ink);
+  }
+  .text-paper {
+    color: var(--color-paper);
+  }
+  .bg-accent-tint {
+    background: color-mix(in srgb, var(--color-accent) 7%, var(--color-paper));
   }
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.glass-strong {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.gradient-mesh {
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(123, 94, 167, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(155, 124, 200, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 40% 80%, rgba(212, 196, 232, 0.1) 0%, transparent 50%);
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-pulse-soft {
-  animation: pulse-soft 3s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

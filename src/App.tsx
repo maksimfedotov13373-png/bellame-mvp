@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { Shield, Sparkles, Phone, MessageCircle, MapPin, Clock } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
+import { ArrowUpRight, Check } from "lucide-react"
 import {
   ZONES,
   ABSOLUTE_CONTRA,
@@ -9,14 +9,49 @@ import {
   AFTER_CARE,
   CONTACTS,
   SLOGAN,
+  type PreCareItem,
 } from "@/lib/data"
 
-type Tab = "contra" | "precare" | "aftercare"
+const EASE = [0.22, 1, 0.36, 1] as const
+
+const rise = (delay: number) => ({
+  initial: { opacity: 0, y: 28, filter: "blur(14px)" },
+  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  viewport: { once: true, margin: "-80px" },
+  transition: { duration: 0.9, ease: EASE, delay },
+})
+
+function useStagger() {
+  const reduce = useReducedMotion()
+  return {
+    initial: reduce ? undefined : { opacity: 0, y: 28, filter: "blur(14px)" },
+    whileInView: reduce ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" },
+    viewport: { once: true, margin: "-60px" },
+    transition: reduce ? { duration: 0 } : { duration: 0.9, ease: EASE },
+  }
+}
+
+function SectionHeader({ index, title, note }: { index: string; title: string; note?: string }) {
+  const s = useStagger()
+  return (
+    <div className="mb-10">
+      <motion.div {...s} className="flex items-baseline gap-4">
+        <span className="label text-faint">{index}</span>
+        <h2>{title}</h2>
+      </motion.div>
+      {note && (
+        <motion.p {...s} transition={{ ...s.transition, delay: 0.1 }} className="mt-4 text-soft">
+          {note}
+        </motion.p>
+      )}
+    </div>
+  )
+}
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("contra")
   const [selectedZones, setSelectedZones] = useState<string[]>([])
   const [checks, setChecks] = useState<Record<string, boolean>>({})
+  const reduce = useReducedMotion()
 
   const toggleZone = (id: string) =>
     setSelectedZones((p) => (p.includes(id) ? p.filter((z) => z !== id) : [...p, id]))
@@ -24,298 +59,325 @@ export default function App() {
   const toggleCheck = (id: string) =>
     setChecks((p) => ({ ...p, [id]: !p[id] }))
 
-  const allAbsolute = ABSOLUTE_CONTRA.every((c) => checks[c.id] === false)
+  const anyAbsolute = ABSOLUTE_CONTRA.some((c) => checks[c.id] === false)
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "contra", label: "Противопоказания", icon: <Shield className="size-4" /> },
-    { id: "precare", label: "До процедуры", icon: <Sparkles className="size-4" /> },
-    { id: "aftercare", label: "После процедуры", icon: <Sparkles className="size-4" /> },
+  const careVisible = (item: PreCareItem) => {
+    if (selectedZones.length === 0) return true
+    if (!item.noteZones) return true
+    return item.noteZones.some((z) => selectedZones.includes(z))
+  }
+
+  const noteVisible = (item: PreCareItem) => {
+    if (!item.note) return false
+    if (selectedZones.length === 0) return true
+    if (!item.noteZones) return true
+    return item.noteZones.some((z) => selectedZones.includes(z))
+  }
+
+  const nav = [
+    { href: "#contra", label: "Противопоказания" },
+    { href: "#prepare", label: "Подготовка" },
+    { href: "#after", label: "После сеанса" },
+    { href: "#book", label: "Запись" },
   ]
 
+  const s = useStagger()
+
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass-strong border-b border-white/30">
-        <div className="container-x flex h-16 items-center justify-between">
-          <span className="font-heading text-2xl font-bold text-purple-dark">Bella Me</span>
-          <a
-            href={CONTACTS.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple to-violet px-5 py-2.5 text-sm font-bold text-white shadow-[0_8px_30px_rgba(123,94,167,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(123,94,167,0.4)]"
-          >
-            <MessageCircle className="size-4" />
-            Записаться
+      <header className="hairline-b sticky top-0 z-50 bg-paper/90 backdrop-blur-md">
+        <div className="container-x flex h-16 items-center justify-between gap-6">
+          <a href="#top" className="flex items-center gap-3">
+            <span className="font-display text-xl font-medium tracking-tight">Bella Me</span>
+            <span className="label hidden text-faint sm:inline">Саратов / лазерная эпиляция</span>
+          </a>
+          <nav className="hidden items-center gap-7 md:flex">
+            {nav.slice(0, 3).map((n) => (
+              <a key={n.href} href={n.href} className="label text-soft transition-colors hover:text-ink">
+                {n.label}
+              </a>
+            ))}
+          </nav>
+          <a href={CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-solid">
+            <span className="btn__fill" />
+            <span className="btn__label">
+              Записаться в WhatsApp
+              <ArrowUpRight className="btn__arrow size-4" />
+            </span>
           </a>
         </div>
       </header>
 
-      <main className="container-x mx-auto max-w-5xl py-8 pb-24">
-        {/* Zone picker */}
-        <section className="mb-10">
-          <h2 className="mb-2 font-heading text-3xl font-bold text-graphite md:text-4xl">
-            Какие зоны вас интересуют?
-          </h2>
-          <p className="mb-6 text-sm text-graphite-soft">Выберите — покажем релевантные рекомендации</p>
-          <div className="flex flex-wrap gap-3">
-            {ZONES.map((z) => {
+      {/* Intro */}
+      <section id="top" className="hairline-b">
+        <div className="container-x py-24 md:py-32">
+          <div className="max-w-4xl">
+            <motion.p {...rise(0)} className="label text-accent">
+              Студия эпиляции — г. Саратов
+            </motion.p>
+            <motion.h1 {...rise(0.1)} className="mt-6">
+              Красота тела —<br />
+              в&nbsp;гармонии с&nbsp;собой
+            </motion.h1>
+            <motion.p {...rise(0.2)} className="mt-8 text-soft">
+              Лазерная, восковая и&nbsp;сахарная эпиляция, массаж лица. Подготовьтесь к&nbsp;сеансу за&nbsp;пару минут —
+              проверьте противопоказания и&nbsp;запомните рекомендации.
+            </motion.p>
+            <motion.div {...rise(0.3)} className="mt-10 flex flex-wrap items-center gap-6">
+              <a href="#book" className="btn btn-solid">
+                <span className="btn__fill" />
+                <span className="btn__label">
+                  Выбрать зону и записаться
+                  <ArrowUpRight className="btn__arrow size-4" />
+                </span>
+              </a>
+              <span className="label text-faint">Ответим за 15 минут / с 9:00 до 20:00</span>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Zones strip */}
+      <section id="zones" className="hairline-b">
+        <div className="container-x py-16 md:py-20">
+          <div className="flex flex-wrap items-baseline justify-between gap-4">
+            <motion.p {...rise(0)} className="label text-faint">
+              01 / Ваши зоны
+            </motion.p>
+            <motion.p {...rise(0.08)} className="label text-soft">
+              Подсказки подстроятся под выбор
+            </motion.p>
+          </div>
+          <motion.div {...s} className="mt-8 flex flex-wrap gap-x-8 gap-y-3">
+            {ZONES.map((z, i) => {
               const active = selectedZones.includes(z.id)
               return (
-                <button
+                <motion.button
                   key={z.id}
                   type="button"
                   onClick={() => toggleZone(z.id)}
-                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                    active
-                      ? "bg-gradient-to-r from-purple to-violet text-white shadow-[0_6px_20px_rgba(123,94,167,0.3)]"
-                      : "glass text-graphite hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(123,94,167,0.1)]"
+                  className={`flex min-h-11 items-center gap-3 border-b py-2 text-left transition-colors ${
+                    active ? "border-ink" : "border-transparent hover:border-ink-faint"
                   }`}
+                  initial={reduce ? undefined : { opacity: 0, y: 16, filter: "blur(8px)" }}
+                  whileInView={reduce ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.9, ease: EASE, delay: 0.05 * i }}
                 >
-                  {z.name}
-                  {z.note && <span className="ml-1 text-xs opacity-70">{z.note}</span>}
-                </button>
+                  <span className={`text-sm font-medium ${active ? "text-ink" : "text-soft"}`}>{z.name}</span>
+                  <span className="text-faint text-xs">{z.note}</span>
+                  <span
+                    className={`flex size-4 items-center justify-center rounded-full transition-colors ${
+                      active ? "bg-accent" : "hairline"
+                    }`}
+                  >
+                    {active && <Check className="size-3 text-paper" strokeWidth={3} />}
+                  </span>
+                </motion.button>
               )
             })}
-          </div>
-        </section>
+          </motion.div>
+        </div>
+      </section>
 
-        {/* Tabs */}
-        <nav className="mb-8 flex gap-2 overflow-x-auto pb-2">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-semibold transition-all ${
-                tab === t.id
-                  ? "bg-purple text-white shadow-[0_4px_15px_rgba(123,94,167,0.3)]"
-                  : "glass text-graphite-soft hover:text-graphite"
-              }`}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </nav>
+      {/* Main two-column */}
+      <div className="container-x grid gap-12 py-20 lg:grid-cols-[220px_1fr] lg:gap-20">
+        {/* Rail nav */}
+        <aside className="hidden lg:block">
+          <nav className="sticky top-28 flex flex-col">
+            {nav.map((n) => (
+              <a
+                key={n.href}
+                href={n.href}
+                className="label py-3 text-faint transition-colors hover:text-ink"
+              >
+                {n.label}
+              </a>
+            ))}
+            <p className="label mt-8 text-faint">{CONTACTS.hours}</p>
+          </nav>
+        </aside>
 
-        {/* Tab content */}
-        <AnimatePresence mode="wait">
-          {tab === "contra" && (
-            <motion.div
-              key="contra"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Absolute */}
-              <div className="mb-8">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-red-100">
-                    <span className="text-sm">⛔</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-graphite">Абсолютные</h3>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {ABSOLUTE_CONTRA.map((c) => {
-                    const checked = checks[c.id] === false
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => toggleCheck(c.id)}
-                        className={`flex items-start gap-3 rounded-xl p-4 text-left transition-all ${
-                          checked
-                            ? "bg-amber-50 ring-1 ring-amber-300"
-                            : "glass hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(123,94,167,0.08)]"
+        {/* Content */}
+        <div className="min-w-0">
+          {/* Contraindications */}
+          <section id="contra" className="scroll-mt-24">
+            <SectionHeader
+              index="02 / Противопоказания"
+              title="Проверьте себя перед сеансом"
+              note="Отметьте пункты, которые про вас. Всё, что отмечено, — повод сказать мастеру при записи."
+            />
+
+            <div className="mb-12">
+              <motion.p {...rise(0)} className="label mb-4 text-accent">
+                Абсолютные — процедура не проводится
+              </motion.p>
+              <div>
+                {ABSOLUTE_CONTRA.map((c, i) => {
+                  const checked = checks[c.id] === false
+                  return (
+                    <motion.button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleCheck(c.id)}
+                      className="hairline-t flex w-full items-start gap-5 py-5 text-left"
+                      {...rise(0.04 * i)}
+                    >
+                      <span
+                        className={`mt-1 flex size-5 shrink-0 items-center justify-center border transition-colors ${
+                          checked ? "border-accent bg-accent" : "border-ink-faint"
                         }`}
                       >
-                        <div
-                          className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                            checked ? "border-amber-400 bg-amber-400" : "border-lavender-deep"
-                          }`}
-                        >
-                          {checked && (
-                            <svg className="size-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className={`text-sm ${checked ? "text-amber-700" : "text-graphite"}`}>
-                          {c.text}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+                        {checked && <Check className="size-3.5 text-paper" strokeWidth={3} />}
+                      </span>
+                      <span className={`text-base leading-relaxed ${checked ? "text-accent" : "text-ink"}`}>
+                        {c.text}
+                      </span>
+                    </motion.button>
+                  )
+                })}
               </div>
+            </div>
 
-              {/* Relative */}
-              <div className="mb-8">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-amber-100">
-                    <span className="text-sm">⚠️</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-graphite">Относительные</h3>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {RELATIVE_CONTRA.map((c) => {
-                    const checked = checks[c.id] === false
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => toggleCheck(c.id)}
-                        className={`flex items-start gap-3 rounded-xl p-4 text-left transition-all ${
-                          checked
-                            ? "bg-amber-50 ring-1 ring-amber-300"
-                            : "glass hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(123,94,167,0.08)]"
+            <div className="mb-12">
+              <motion.p {...rise(0)} className="label mb-4 text-faint">
+                Относительные — нужно уточнить у мастера
+              </motion.p>
+              <div>
+                {RELATIVE_CONTRA.map((c, i) => {
+                  const checked = checks[c.id] === false
+                  return (
+                    <motion.button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleCheck(c.id)}
+                      className="hairline-t flex w-full items-start gap-5 py-5 text-left"
+                      {...rise(0.04 * i)}
+                    >
+                      <span
+                        className={`mt-1 flex size-5 shrink-0 items-center justify-center border transition-colors ${
+                          checked ? "border-accent bg-accent" : "border-ink-faint"
                         }`}
                       >
-                        <div
-                          className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                            checked ? "border-amber-400 bg-amber-400" : "border-lavender-deep"
-                          }`}
-                        >
-                          {checked && (
-                            <svg className="size-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className={`text-sm ${checked ? "text-amber-700" : "text-graphite"}`}>
-                          {c.text}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Disclaimer */}
-              <div className="glass-strong rounded-2xl p-6">
-                <p className="text-sm text-graphite-soft">
-                  Если у вас есть сомнения — обязательно проконсультируйтесь с мастером перед процедурой.
-                </p>
-                <p className="mt-2 text-sm font-bold text-purple-dark">
-                  Ваша безопасность — наш приоритет ♥
-                </p>
-              </div>
-            </motion.div>
-          )}
-
-          {tab === "precare" && (
-            <motion.div
-              key="precare"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-full bg-purple/10">
-                  <span className="text-sm">📋</span>
-                </div>
-                <h3 className="text-lg font-bold text-graphite">Рекомендации перед сеансом</h3>
-              </div>
-              <div className="flex flex-col gap-3">
-                {PRE_CARE.map((item, i) => (
-                  <div key={i} className="glass rounded-xl p-5">
-                    <p className="text-sm text-graphite">{item.text}</p>
-                    {item.note && (
-                      <p className="mt-1 text-xs italic text-graphite-soft">* {item.note}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {tab === "aftercare" && (
-            <motion.div
-              key="aftercare"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-full bg-purple/10">
-                  <span className="text-sm">✅</span>
-                </div>
-                <h3 className="text-lg font-bold text-graphite">Рекомендации после сеанса</h3>
-              </div>
-              <div className="flex flex-col gap-3">
-                {AFTER_CARE.map((item, i) => (
-                  <div key={i} className="glass rounded-xl p-5">
-                    <p className="text-sm text-graphite">{item.text}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Contact block */}
-        <section className="mt-12 glass-strong rounded-3xl p-8">
-          <h2 className="mb-6 font-heading text-2xl font-bold text-graphite">Контакты</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="flex flex-col gap-4">
-              <a
-                href={CONTACTS.phoneHref}
-                className="flex items-center gap-3 text-sm text-graphite transition-colors hover:text-purple-dark"
-              >
-                <Phone className="size-4 shrink-0 text-purple" />
-                {CONTACTS.phone}
-              </a>
-              <a
-                href={CONTACTS.whatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-sm text-graphite transition-colors hover:text-purple-dark"
-              >
-                <MessageCircle className="size-4 shrink-0 text-purple" />
-                WhatsApp
-              </a>
-              <div className="flex items-center gap-3 text-sm text-graphite">
-                <MapPin className="size-4 shrink-0 text-purple" />
-                <div>
-                  <span>{CONTACTS.address}</span>
-                  <br />
-                  <span className="text-xs text-graphite-soft">{CONTACTS.addressDetail}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-graphite">
-                <Clock className="size-4 shrink-0 text-purple" />
-                {CONTACTS.hours}
+                        {checked && <Check className="size-3.5 text-paper" strokeWidth={3} />}
+                      </span>
+                      <span className={`text-base leading-relaxed ${checked ? "text-accent" : "text-ink"}`}>
+                        {c.text}
+                      </span>
+                    </motion.button>
+                  )
+                })}
               </div>
             </div>
-            <div className="flex flex-col items-start gap-3 sm:items-end">
-              <a
-                href={CONTACTS.whatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple to-violet px-8 py-4 text-base font-bold text-white shadow-[0_16px_50px_rgba(123,94,167,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_60px_rgba(123,94,167,0.4)]"
+
+            {anyAbsolute && (
+              <motion.div
+                className="bg-accent-tint px-6 py-5"
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, ease: EASE }}
               >
-                <MessageCircle className="size-4" />
-                Написать в WhatsApp
-              </a>
-              <a
-                href={CONTACTS.phoneHref}
-                className="inline-flex items-center gap-2 rounded-full glass px-8 py-4 text-base font-semibold text-purple-dark transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(123,94,167,0.1)]"
-              >
-                <Phone className="size-4" />
-                Позвонить
-              </a>
+                <p className="text-ink">
+                  Вы отметили пункты из абсолютных противопоказаний. Обязательно сообщите о&nbsp;них мастеру —
+                  вместе решите, что можно сделать.
+                </p>
+              </motion.div>
+            )}
+          </section>
+
+          {/* Preparation */}
+          <section id="prepare" className="scroll-mt-24 pt-24">
+            <SectionHeader
+              index="03 / Подготовка"
+              title="Как подготовиться к сеансу"
+            />
+            <div>
+              {PRE_CARE.map((item, i) => (
+                <motion.div key={i} className="hairline-t py-6" {...rise(0.05 * i)}>
+                  <div className="flex items-baseline gap-5">
+                    <span className="label text-faint">0{i + 1}</span>
+                    <div className="max-w-[60ch]">
+                      <p className="text-base leading-relaxed">{item.text}</p>
+                      {noteVisible(item) && (
+                        <p className="mt-2 text-sm italic text-soft">{item.note}</p>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
+          </section>
+
+          {/* After care */}
+          <section id="after" className="scroll-mt-24 pt-24">
+            <SectionHeader
+              index="04 / После сеанса"
+              title="Как ухаживать за кожей после"
+            />
+            <div>
+              {AFTER_CARE.map((item, i) => (
+                <motion.div key={i} className="hairline-t py-6" {...rise(0.05 * i)}>
+                  <div className="flex items-baseline gap-5">
+                    <span className="label text-faint">0{i + 1}</span>
+                    <p className="max-w-[60ch] text-base leading-relaxed">{item.text}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+
+          {/* Booking */}
+          <section id="book" className="scroll-mt-24 pt-24">
+            <div className="hairline-t pt-12">
+              <SectionHeader index="05 / Запись" title="Начните с сообщения" />
+              <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
+                <div className="flex flex-col gap-6">
+                  <a
+                    href={CONTACTS.phoneHref}
+                    className="font-display text-4xl font-medium tracking-tight transition-colors hover:text-accent md:text-6xl"
+                  >
+                    {CONTACTS.phone}
+                  </a>
+                  <div className="flex flex-col gap-3 text-soft">
+                    <p>{CONTACTS.address}, {CONTACTS.addressDetail}</p>
+                    <p>{CONTACTS.hours}</p>
+                    <p>
+                      VK: <a href={CONTACTS.vk} target="_blank" rel="noopener noreferrer" className="underline decoration-hairline underline-offset-4 transition-colors hover:text-accent">bella.me64</a>
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-start gap-4">
+                  <a href={CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-solid">
+                    <span className="btn__fill" />
+                    <span className="btn__label">
+                      Записаться в WhatsApp
+                      <ArrowUpRight className="btn__arrow size-4" />
+                    </span>
+                  </a>
+                  <a href={CONTACTS.phoneHref} className="btn btn-outline">
+                    <span className="btn__fill" />
+                    <span className="btn__label">Позвонить в студию</span>
+                  </a>
+                  <span className="label text-faint">Ответим за 15 минут</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="hairline-t">
+        <div className="container-x flex flex-col gap-6 py-14 md:flex-row md:items-center md:justify-between">
+          <p className="font-display text-2xl font-medium italic">{SLOGAN}</p>
+          <div className="flex flex-col gap-2 text-sm text-faint">
+            <span>Информация носит предварительный характер.</span>
+            <span>Окончательное решение — со специалистом студии.</span>
           </div>
-        </section>
-
-        {/* Slogan */}
-        <p className="mt-10 text-center font-heading text-xl italic text-graphite-soft">
-          {SLOGAN}
-        </p>
-      </main>
+        </div>
+      </footer>
     </div>
   )
 }
