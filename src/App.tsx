@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { motion, useReducedMotion } from "framer-motion"
+import { useState, useMemo } from "react"
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion"
 import { ArrowUpRight, Check, Plus } from "lucide-react"
 import {
   ZONES,
@@ -9,58 +9,17 @@ import {
   AFTER_CARE,
   CONTACTS,
   SLOGAN,
-  type PreCareItem,
 } from "@/lib/data"
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
-function useRise(delay: number) {
-  const reduce = useReducedMotion()
-  return riseProps(delay, reduce)
-}
-
-function riseProps(delay: number, reduce: boolean | null) {
+function rise(delay: number, reduce: boolean | null) {
   return {
     initial: reduce ? undefined : { opacity: 0, y: 28, filter: "blur(14px)" },
     whileInView: reduce ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" },
     viewport: { once: true, margin: "-60px" },
     transition: reduce ? { duration: 0 } : { duration: 0.9, ease: EASE, delay },
   }
-}
-
-function useStagger() {
-  const reduce = useReducedMotion()
-  return {
-    initial: reduce ? undefined : { opacity: 0, y: 28, filter: "blur(14px)" },
-    whileInView: reduce ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" },
-    viewport: { once: true, margin: "-60px" },
-    transition: reduce ? { duration: 0 } : { duration: 0.9, ease: EASE },
-  }
-}
-
-function SectionHead({
-  index,
-  title,
-  note,
-}: {
-  index: string
-  title: string
-  note?: string
-}) {
-  const s = useStagger()
-  return (
-    <div className="mb-10">
-      <motion.div {...s} className="flex items-baseline gap-4">
-        <span className="label text-faint">{index}</span>
-        <h2>{title}</h2>
-      </motion.div>
-      {note && (
-        <motion.p {...s} transition={{ ...s.transition, delay: 0.1 }} className="mt-4 text-soft">
-          {note}
-        </motion.p>
-      )}
-    </div>
-  )
 }
 
 export default function App() {
@@ -70,28 +29,25 @@ export default function App() {
   const toggleZone = (id: string) =>
     setSelectedZones((p) => (p.includes(id) ? p.filter((z) => z !== id) : [...p, id]))
 
-  const careVisible = (item: PreCareItem) => {
-    if (selectedZones.length === 0) return true
-    if (!item.noteZones) return true
-    return item.noteZones.some((z) => selectedZones.includes(z))
+  const activeZoneIds = useMemo(
+    () => selectedZones.filter((z) => z !== "all"),
+    [selectedZones],
+  )
+
+  const isZoneRelevant = (zones?: string[]) => {
+    if (!zones || zones.length === 0) return false
+    return zones.some((z) => activeZoneIds.includes(z))
   }
 
-  const noteVisible = (item: PreCareItem) => {
-    if (!item.note) return false
-    if (selectedZones.length === 0) return true
-    if (!item.noteZones) return true
-    return item.noteZones.some((z) => selectedZones.includes(z))
-  }
-
-  const s = useStagger()
+  const r = (delay: number) => rise(delay, reduce)
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
+      {/* ── Header ── */}
       <header className="hairline-b sticky top-0 z-50 bg-paper/90 backdrop-blur-md">
         <div className="container-x flex h-16 items-center justify-between gap-6">
           <a href="#top" className="flex items-center gap-3">
-            <span className="font-display text-xl font-medium tracking-tight">Bella Me</span>
+            <span className="font-display text-xl  tracking-tight">Bella Me</span>
             <span className="label hidden text-faint sm:inline">Саратов / лазерная эпиляция</span>
           </a>
           <a href={CONTACTS.phoneHref} className="label hidden text-soft transition-colors hover:text-ink md:block">
@@ -108,22 +64,22 @@ export default function App() {
       </header>
 
       <main className="pb-28 lg:pb-0">
-        {/* Intro */}
+        {/* ── Intro ── */}
         <section id="top" className="hairline-b">
           <div className="container-x py-20 md:py-28">
             <div className="max-w-3xl">
-              <motion.p {...useRise(0)} className="label text-accent">
-                Студия эпиляции — г. Саратов
+              <motion.p {...r(0)} className="label text-accent">
+                Студия эпиляции — г.&nbsp;Саратов
               </motion.p>
-              <motion.h1 {...useRise(0.1)} className="mt-6">
+              <motion.h1 {...r(0.1)} className="mt-6">
                 Красота тела —<br />
                 в&nbsp;гармонии с&nbsp;собой
               </motion.h1>
-              <motion.p {...useRise(0.2)} className="mt-8 text-soft">
-                Лазерная, восковая и&nbsp;сахарная эпиляция, массаж лица. Здесь собрано самое важное для
-                подготовки к&nbsp;сеансу — противопоказания, правила и&nbsp;контакты.
+              <motion.p {...r(0.2)} className="mt-8 text-soft">
+                Лазерная, восковая и&nbsp;сахарная эпиляция, массаж лица. Здесь собрано самое важное для подготовки
+                к&nbsp;сеансу.
               </motion.p>
-              <motion.div {...useRise(0.3)} className="mt-10 flex flex-col gap-3 text-sm text-soft sm:flex-row sm:items-center sm:gap-6">
+              <motion.div {...r(0.3)} className="mt-10 flex flex-col gap-3 text-sm text-soft sm:flex-row sm:items-center sm:gap-6">
                 <span>{CONTACTS.address}</span>
                 <span className="hidden h-4 w-px bg-ink-faint/40 sm:block" />
                 <span>{CONTACTS.hours}</span>
@@ -134,18 +90,20 @@ export default function App() {
           </div>
         </section>
 
-        {/* Zones */}
+        {/* ── Zones ── */}
         <section className="hairline-b">
           <div className="container-x py-16 md:py-20">
             <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
-              <motion.p {...useRise(0)} className="label text-faint">
+              <motion.p {...r(0)} className="label text-faint">
                 01 / Ваши зоны
               </motion.p>
-              <motion.p {...useRise(0.08)} className="label text-soft">
-                Подсказки подстроятся под выбор
+              <motion.p {...r(0.08)} className="label text-soft">
+                {activeZoneIds.length > 0
+                  ? `Выбрано: ${activeZoneIds.length}`
+                  : "Выберите — подсветим подходящие пункты"}
               </motion.p>
             </div>
-            <motion.div {...s} className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {ZONES.map((z, i) => {
                 const active = selectedZones.includes(z.id)
                 return (
@@ -160,12 +118,15 @@ export default function App() {
                     whileInView={reduce ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.9, ease: EASE, delay: 0.05 * i }}
+                    whileTap={{ scale: 0.97 }}
                   >
                     <span>
-                      <span className="block text-sm font-medium">{z.name}</span>
-                      <span className={`mt-0.5 block text-xs ${active ? "text-paper/60" : "text-faint"}`}>
-                        {z.note}
-                      </span>
+                      <span className="block text-sm ">{z.name}</span>
+                      {z.note && (
+                        <span className={`mt-0.5 block text-xs ${active ? "text-paper/60" : "text-faint"}`}>
+                          {z.note}
+                        </span>
+                      )}
                     </span>
                     <span className={`flex size-5 shrink-0 items-center justify-center ${active ? "bg-accent" : "hairline"}`}>
                       {active ? (
@@ -177,47 +138,60 @@ export default function App() {
                   </motion.button>
                 )
               })}
-            </motion.div>
+            </div>
           </div>
         </section>
 
-        {/* Contraindications */}
+        {/* ── Contraindications ── */}
         <section className="hairline-b">
           <div className="container-x py-16 md:py-20">
-            <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
+            <div className="mb-12" {...r(0)}>
+              <span className="label text-faint">02 / Противопоказания</span>
+              <h2 className="mt-4">Проверьте себя</h2>
+              <p className="mt-3 text-soft">Отметьте, что про вас, и&nbsp;сообщите мастеру при записи.</p>
+            </div>
+
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
               <div>
-                <SectionHead
-                  index="02 / Противопоказания"
-                  title="Абсолютные"
-                  note="Процедура не проводится"
-                />
+                <div className="mb-6 flex items-baseline gap-4">
+                  <span className="label text-accent">Абсолютные</span>
+                  <span className="label text-faint">не проводится</span>
+                </div>
                 <div>
                   {ABSOLUTE_CONTRA.map((c, i) => (
-                    <motion.div key={c.id} className="hairline-t flex items-baseline gap-5 py-5" {...riseProps(0.05 * i, reduce)}>
-                      <span className="label shrink-0 text-faint">0{i + 1}</span>
-                      <p className="text-base leading-relaxed">{c.text}</p>
+                    <motion.div
+                      key={c.id}
+                      className="hairline-t flex items-baseline gap-5 py-4"
+                      {...r(0.04 * i)}
+                    >
+                      <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
+                      <p className="text-sm leading-relaxed md:text-base">{c.text}</p>
                     </motion.div>
                   ))}
                 </div>
               </div>
 
               <div>
-                <SectionHead
-                  index="03 / Противопоказания"
-                  title="Относительные"
-                  note="Нужно уточнить у мастера"
-                />
+                <div className="mb-6 flex items-baseline gap-4">
+                  <span className="label text-faint">Относительные</span>
+                  <span className="label text-faint">уточнить</span>
+                </div>
                 <div>
                   {RELATIVE_CONTRA.map((c, i) => (
-                    <motion.div key={c.id} className="hairline-t flex items-baseline gap-5 py-5" {...riseProps(0.05 * i, reduce)}>
-                      <span className="label shrink-0 text-faint">0{i + 1}</span>
-                      <p className="text-base leading-relaxed">{c.text}</p>
+                    <motion.div
+                      key={c.id}
+                      className="hairline-t flex items-baseline gap-5 py-4"
+                      {...r(0.04 * i)}
+                    >
+                      <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
+                      <p className="text-sm leading-relaxed md:text-base">{c.text}</p>
                     </motion.div>
                   ))}
                 </div>
               </div>
             </div>
-            <motion.div {...useRise(0.1)} className="bg-accent-tint mt-12 px-6 py-5">
+
+            <motion.div {...r(0.1)} className="bg-accent-tint mt-12 px-6 py-5">
               <p className="text-sm leading-relaxed text-ink">
                 Есть сомнения? Сообщите мастеру при записи — он подскажет, что можно сделать в&nbsp;вашем случае.
               </p>
@@ -225,38 +199,71 @@ export default function App() {
           </div>
         </section>
 
-        {/* Preparation */}
+        {/* ── Preparation ── */}
         <section className="hairline-b">
           <div className="container-x py-16 md:py-20">
-            <SectionHead index="04 / Подготовка" title="Как подготовиться к сеансу" />
+            <div className="mb-10" {...r(0)}>
+              <span className="label text-faint">03 / Подготовка</span>
+              <h2 className="mt-4">Как подготовиться к&nbsp;сеансу</h2>
+            </div>
             <div>
-              {PRE_CARE.map((item, i) => (
-                <motion.div key={i} className="hairline-t py-6" {...riseProps(0.05 * i, reduce)}>
-                  <div className="flex items-baseline gap-5">
-                    <span className="label shrink-0 text-faint">0{i + 1}</span>
-                    <div className="max-w-[60ch]">
-                      <p className="text-base leading-relaxed">{item.text}</p>
-                      {noteVisible(item) && careVisible(item) && (
-                        <p className="mt-2 text-sm italic text-soft">{item.note}</p>
+              {PRE_CARE.map((item, i) => {
+                const relevant = isZoneRelevant(item.zones)
+                const showNote = item.note && (selectedZones.length === 0 || relevant)
+                return (
+                  <motion.div
+                    key={i}
+                    className={`hairline-t py-5 transition-colors duration-500 ${
+                      relevant ? "bg-accent-tint px-4 -mx-4" : ""
+                    }`}
+                    {...r(0.05 * i)}
+                  >
+                    <div className="flex items-baseline gap-5">
+                      <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
+                      <div className="max-w-[60ch]">
+                        <p className="text-sm leading-relaxed md:text-base">{item.text}</p>
+                        {showNote && (
+                          <motion.p
+                            initial={reduce ? undefined : { opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, ease: EASE }}
+                            className="mt-2 text-xs italic text-soft"
+                          >
+                            * {item.note}
+                          </motion.p>
+                        )}
+                      </div>
+                      {relevant && (
+                        <motion.span
+                          className="label shrink-0 text-accent"
+                          initial={reduce ? undefined : { opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.4, ease: EASE }}
+                        >
+                          ваша зона
+                        </motion.span>
                       )}
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                )
+              })}
             </div>
           </div>
         </section>
 
-        {/* After care */}
+        {/* ── After care ── */}
         <section className="hairline-b">
           <div className="container-x py-16 md:py-20">
-            <SectionHead index="05 / После сеанса" title="Как ухаживать за кожей после" />
+            <div className="mb-10" {...r(0)}>
+              <span className="label text-faint">04 / После сеанса</span>
+              <h2 className="mt-4">Как ухаживать за&nbsp;кожей</h2>
+            </div>
             <div>
               {AFTER_CARE.map((item, i) => (
-                <motion.div key={i} className="hairline-t py-6" {...riseProps(0.05 * i, reduce)}>
+                <motion.div key={i} className="hairline-t py-5" {...r(0.05 * i)}>
                   <div className="flex items-baseline gap-5">
-                    <span className="label shrink-0 text-faint">0{i + 1}</span>
-                    <p className="max-w-[60ch] text-base leading-relaxed">{item.text}</p>
+                    <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
+                    <p className="max-w-[60ch] text-sm leading-relaxed md:text-base">{item.text}</p>
                   </div>
                 </motion.div>
               ))}
@@ -264,22 +271,23 @@ export default function App() {
           </div>
         </section>
 
-        {/* Booking */}
+        {/* ── Booking ── */}
         <section className="hairline-b">
           <div className="container-x py-16 md:py-24">
-            <SectionHead index="06 / Запись" title="Начните с сообщения" />
+            <div className="mb-12" {...r(0)}>
+              <span className="label text-faint">05 / Запись</span>
+              <h2 className="mt-4">Начните с&nbsp;сообщения</h2>
+            </div>
             <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
               <div className="flex flex-col gap-6">
                 <a
                   href={CONTACTS.phoneHref}
-                  className="font-display text-4xl font-medium tracking-tight transition-colors hover:text-accent md:text-5xl"
+                  className="font-display text-4xl  tracking-tight transition-colors hover:text-accent md:text-5xl"
                 >
                   {CONTACTS.phone}
                 </a>
-                <div className="flex flex-col gap-2 text-soft">
-                  <p>
-                    {CONTACTS.address}, {CONTACTS.addressDetail}
-                  </p>
+                <div className="flex flex-col gap-2 text-sm text-soft">
+                  <p>{CONTACTS.address}, {CONTACTS.addressDetail}</p>
                   <p>{CONTACTS.hours}</p>
                   <p>
                     VK:{" "}
@@ -313,7 +321,7 @@ export default function App() {
         </section>
       </main>
 
-      {/* Mobile sticky booking bar */}
+      {/* Mobile sticky bar */}
       <div className="hairline-t fixed inset-x-0 bottom-0 z-40 bg-paper/95 backdrop-blur-md lg:hidden">
         <div className="container-x flex gap-3 py-3">
           <a href={CONTACTS.phoneHref} className="btn btn-outline flex-1">
@@ -330,7 +338,7 @@ export default function App() {
       {/* Footer */}
       <footer className="hairline-t">
         <div className="container-x flex flex-col gap-6 py-14 md:flex-row md:items-center md:justify-between">
-          <p className="font-display text-2xl font-medium italic">{SLOGAN}</p>
+          <p className="font-display text-2xl  italic">{SLOGAN}</p>
           <div className="flex flex-col gap-2 text-sm text-faint">
             <span>Информация носит предварительный характер.</span>
             <span>Окончательное решение — со специалистом студии.</span>
