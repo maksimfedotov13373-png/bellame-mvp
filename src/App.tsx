@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion"
-import { ArrowUpRight, ArrowRight, Phone, MessageCircle, MapPin, Clock, Menu, X } from "lucide-react"
+import { ArrowUpRight, ArrowRight, Phone, MessageCircle, MapPin, Clock, Menu, X, Check } from "lucide-react"
 import {
+  ZONES,
   ABSOLUTE_CONTRA,
   RELATIVE_CONTRA,
   PRE_CARE,
@@ -30,11 +31,35 @@ const services = [
   { name: "АЦ Программа Липолитик", price: "2 500 ₽", desc: "Инъекционная липолитика — коррекция фигуры, уменьшение объёмов." },
 ]
 
+const CHECKER_QUESTIONS = [
+  { id: "age", text: "Вам уже есть 18 лет?", blockIf: true },
+  { id: "pregnancy", text: "Нет беременности или лактации?", blockIf: true },
+  { id: "skin", text: "Нет кожных заболеваний, герпеса или судорог?", blockIf: true },
+]
+
 export default function App() {
   const reduce = useReducedMotion()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [checkerStep, setCheckerStep] = useState(0)
+  const [selectedZones, setSelectedZones] = useState<string[]>([])
+  const [answers, setAnswers] = useState<Record<string, boolean>>({})
 
   const r = (delay: number) => rise(delay, reduce)
+
+  const toggleZone = (id: string) =>
+    setSelectedZones((prev) => (prev.includes(id) ? prev.filter((z) => z !== id) : [...prev, id]))
+
+  const answerQuestion = (id: string, value: boolean) =>
+    setAnswers((prev) => ({ ...prev, [id]: value }))
+
+  const checkerResult = useMemo(() => {
+    if (checkerStep !== 3) return null
+    const blocked = CHECKER_QUESTIONS.some((q) => answers[q.id] === q.blockIf)
+    const relevantPre = PRE_CARE.filter(
+      (item) => !item.zones || item.zones.some((z) => selectedZones.includes(z)),
+    )
+    return { blocked, relevantPre }
+  }, [checkerStep, answers, selectedZones])
 
   return (
     <div className="min-h-screen">
@@ -135,6 +160,192 @@ export default function App() {
             </div>
             <div className="absolute -inset-3 -z-10 bg-gradient-to-tr from-accent/10 to-transparent" />
           </motion.div>
+        </div>
+      </section>
+
+      {/* ── Checker ── */}
+      <section className="hairline-t hairline-b bg-paper-deep">
+        <div className="container-x py-14 md:py-20">
+          <div className="mx-auto max-w-2xl">
+            {checkerStep === 0 && (
+              <motion.div className="text-center" {...r(0)}>
+                <span className="label text-accent">Быстрая проверка</span>
+                <h2 className="mt-4">Подходит ли мне процедура?</h2>
+                <p className="mt-4 text-soft">
+                  Выберите зоны и ответьте на 3 вопроса — получите персональные рекомендации.
+                </p>
+                <button onClick={() => setCheckerStep(1)} className="btn btn-solid mt-8">
+                  <span className="btn__fill" />
+                  <span className="btn__label">Проверить</span>
+                </button>
+              </motion.div>
+            )}
+
+            {checkerStep === 1 && (
+              <motion.div {...r(0)}>
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="label text-accent">Шаг 1 из 2</span>
+                  <button onClick={() => setCheckerStep(0)} className="label text-faint transition-colors hover:text-ink">Начать заново</button>
+                </div>
+                <div className="mb-6 h-0.5 w-full bg-hairline">
+                  <div className="h-full w-1/2 bg-accent transition-all" />
+                </div>
+                <h3 className="mb-6">Какие зоны вас интересуют?</h3>
+                <div className="flex flex-wrap gap-3">
+                  {ZONES.map((z) => {
+                    const active = selectedZones.includes(z.id)
+                    return (
+                      <button
+                        key={z.id}
+                        onClick={() => toggleZone(z.id)}
+                        className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm transition-all ${
+                          active
+                            ? "border-accent bg-accent text-white"
+                            : "border-hairline bg-paper text-ink hover:border-accent/40"
+                        }`}
+                      >
+                        {active && <Check className="size-3.5" />}
+                        {z.name}
+                      </button>
+                    )
+                  })}
+                </div>
+                <button
+                  onClick={() => selectedZones.length > 0 && setCheckerStep(2)}
+                  disabled={selectedZones.length === 0}
+                  className="btn btn-solid mt-8 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <span className="btn__fill" />
+                  <span className="btn__label">Далее</span>
+                </button>
+              </motion.div>
+            )}
+
+            {checkerStep === 2 && (
+              <motion.div {...r(0)}>
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="label text-accent">Шаг 2 из 2</span>
+                  <button onClick={() => setCheckerStep(1)} className="label text-faint transition-colors hover:text-ink">Назад</button>
+                </div>
+                <div className="mb-6 h-0.5 w-full bg-hairline">
+                  <div className="h-full w-full bg-accent transition-all" />
+                </div>
+                <h3 className="mb-6">Ответьте на несколько вопросов</h3>
+                <div className="flex flex-col gap-5">
+                  {CHECKER_QUESTIONS.map((q) => (
+                    <div key={q.id} className="hairline-t pt-5">
+                      <p className="mb-3 text-sm font-medium">{q.text}</p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => answerQuestion(q.id, false)}
+                          className={`rounded-full border px-5 py-2 text-sm transition-all ${
+                            answers[q.id] === false
+                              ? "border-accent bg-accent text-white"
+                              : "border-hairline bg-paper text-ink hover:border-accent/40"
+                          }`}
+                        >
+                          Да
+                        </button>
+                        <button
+                          onClick={() => answerQuestion(q.id, true)}
+                          className={`rounded-full border px-5 py-2 text-sm transition-all ${
+                            answers[q.id] === true
+                              ? "border-accent bg-accent text-white"
+                              : "border-hairline bg-paper text-ink hover:border-accent/40"
+                          }`}
+                        >
+                          Нет
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCheckerStep(3)}
+                  disabled={CHECKER_QUESTIONS.some((q) => !(q.id in answers))}
+                  className="btn btn-solid mt-8 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <span className="btn__fill" />
+                  <span className="btn__label">Узнать результат</span>
+                </button>
+              </motion.div>
+            )}
+
+            {checkerStep === 3 && checkerResult && (
+              <motion.div {...r(0)}>
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="label text-accent">Результат</span>
+                  <button onClick={() => { setCheckerStep(0); setAnswers({}); setSelectedZones([]) }} className="label text-faint transition-colors hover:text-ink">Начать заново</button>
+                </div>
+
+                {checkerResult.blocked ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+                    <h3 className="mb-2 text-red-700">Есть противопоказания</h3>
+                    <p className="text-sm leading-relaxed text-red-600">
+                      По вашим ответам процедура не рекомендуется. Мы настоятельно рекомендуем
+                      проконсультироваться с врачом перед записью. Ваша безопасность — наш приоритет.
+                    </p>
+                    <a href={CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-outline mt-5 border-red-300 text-red-700 hover:bg-red-100">
+                      <span className="btn__fill" />
+                      <span className="btn__label">Связаться с нами</span>
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-6 rounded-xl border border-accent/20 bg-accent/5 p-6">
+                      <h3 className="mb-2 text-accent">Процедура вам подходит</h3>
+                      <p className="text-sm text-soft">
+                        Вот что важно знать для выбранных зон: {selectedZones.map((id) => ZONES.find((z) => z.id === id)?.name).filter(Boolean).join(", ")}.
+                      </p>
+                    </div>
+
+                    <h4 className="mb-4">Подготовка к сеансу</h4>
+                    <div className="mb-6">
+                      {checkerResult.relevantPre.map((item, i) => (
+                        <div key={i} className="hairline-t py-4">
+                          <div className="flex items-baseline gap-4">
+                            <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
+                            <div className="max-w-[56ch]">
+                              <p className="text-sm leading-relaxed">{item.text}</p>
+                              {item.note && (
+                                <p className="mt-1.5 text-xs italic text-soft">* {item.note}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <h4 className="mb-4">После процедуры</h4>
+                    <div className="mb-6">
+                      {AFTER_CARE.map((item, i) => (
+                        <div key={i} className="hairline-t py-4">
+                          <div className="flex items-baseline gap-4">
+                            <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
+                            <p className="max-w-[56ch] text-sm leading-relaxed">{item.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-4">
+                      <a href={CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-solid">
+                        <span className="btn__fill" />
+                        <span className="btn__label">
+                          Записаться в WhatsApp
+                          <ArrowUpRight className="btn__arrow size-4" />
+                        </span>
+                      </a>
+                      <a href={CONTACTS.phoneHref} className="btn btn-outline">
+                        <span className="btn__fill" />
+                        <span className="btn__label">Позвонить</span>
+                      </a>
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </div>
         </div>
       </section>
 
