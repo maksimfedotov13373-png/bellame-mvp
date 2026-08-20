@@ -1,5 +1,6 @@
-import { motion, useReducedMotion } from "framer-motion"
-import { ArrowUpRight, ArrowRight, Shield, Sparkles, Phone, MessageCircle, MapPin, Clock, Heart, Star } from "lucide-react"
+import { useState } from "react"
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion"
+import { ArrowUpRight, ArrowRight, Phone, MessageCircle, MapPin, Clock, Menu, X } from "lucide-react"
 import {
   ABSOLUTE_CONTRA,
   RELATIVE_CONTRA,
@@ -20,15 +21,8 @@ function rise(delay: number, reduce: boolean | null) {
   }
 }
 
-const features = [
-  { icon: Shield, title: "Безопасно", text: "Лицензированное оборудование, стерильность, полная дезинфекция" },
-  { icon: Star, title: "Опытные мастера", text: "Сертифицированные специалисты с профильным образованием" },
-  { icon: Sparkles, title: "Современные технологии", text: "Diode лазер нового поколения, точная настройка под ваш тип кожи" },
-  { icon: Heart, title: "Комфорт", text: "Индивидуальный подход, мягкое воздействие, без боли" },
-]
-
 const services = [
-  { name: "Лазерная эпиляция", price: "от 500 ₽", desc: "Diode лазер — эффективно и безопасно для всех зон. Результат уже после первого сеанса." },
+  { name: "Лазерная эпиляция", price: "от 500 ₽", desc: "Лазер последнего поколения — эффективно и безопасно для всех зон. Результат уже после первого сеанса." },
   { name: "Восковая эпиляция", price: "от 400 ₽", desc: "Классический метод для быстрого результата. Подходит для всех зон тела." },
   { name: "Сахарная эпиляция", price: "от 400 ₽", desc: "Натуральный состав, мягкое удаление. Идеально для чувствительной кожи." },
   { name: "Массаж лица", price: "800 ₽", desc: "Антивозрастной массаж — подтяжка, контур, сияние кожи." },
@@ -38,6 +32,7 @@ const services = [
 
 export default function App() {
   const reduce = useReducedMotion()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const r = (delay: number) => rise(delay, reduce)
 
@@ -53,14 +48,45 @@ export default function App() {
             <a href="#prep" className="label text-soft transition-colors hover:text-ink">Подготовка</a>
             <a href="#contact" className="label text-soft transition-colors hover:text-ink">Контакты</a>
           </nav>
-          <a href={CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-solid">
-            <span className="btn__fill" />
-            <span className="btn__label">
-              Записаться
-              <ArrowUpRight className="btn__arrow size-4" />
-            </span>
-          </a>
+          <div className="flex items-center gap-4">
+            <a href={CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-solid hidden md:inline-flex">
+              <span className="btn__fill" />
+              <span className="btn__label">
+                Записаться
+                <ArrowUpRight className="btn__arrow size-4" />
+              </span>
+            </a>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex size-10 items-center justify-center md:hidden"
+              aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
+            >
+              {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
         </div>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.nav
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="overflow-hidden border-t border-hairline md:hidden"
+            >
+              <div className="container-x flex flex-col gap-1 py-4">
+                <a href="#services" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-paper-deep">Услуги</a>
+                <a href="#about" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-paper-deep">О нас</a>
+                <a href="#prep" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-paper-deep">Подготовка</a>
+                <a href="#contact" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-paper-deep">Контакты</a>
+                <a href={CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-solid mt-2">
+                  <span className="btn__fill" />
+                  <span className="btn__label">Записаться в WhatsApp</span>
+                </a>
+              </div>
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* ── Hero ── */}
@@ -112,15 +138,19 @@ export default function App() {
         </div>
       </section>
 
-      {/* ── Features ── */}
+      {/* ── Stats ── */}
       <section className="hairline-t hairline-b">
         <div className="container-x py-6 md:py-8">
           <div className="grid grid-cols-2 gap-px md:grid-cols-4">
-            {features.map((f, i) => (
-              <motion.div key={f.title} className="flex flex-col gap-3 p-7 md:p-10" {...r(0.06 * i)}>
-                <f.icon className="size-6 text-accent" strokeWidth={1.5} />
-                <h3 className="text-base font-medium">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-soft">{f.text}</p>
+            {[
+              { value: "7+", label: "лет опыта" },
+              { value: "5 000+", label: "сеансов" },
+              { value: "22", label: "отзыва на Avito" },
+              { value: "100%", label: "стерильность" },
+            ].map((s, i) => (
+              <motion.div key={s.label} className="flex flex-col items-center gap-1 p-5 text-center md:p-7" {...r(0.06 * i)}>
+                <span className="font-display text-2xl text-accent md:text-3xl">{s.value}</span>
+                <span className="label text-faint">{s.label}</span>
               </motion.div>
             ))}
           </div>
@@ -179,7 +209,7 @@ export default function App() {
                 Наша миссия — помочь вам почувствовать себя уверенно и&nbsp;комфортно в&nbsp;своём теле.
               </p>
               <p className="mt-4 text-soft">
-                Используем современное diode-оборудование, работаем с&nbsp;учётом индивидуальных особенностей кожи.
+                Используем современное лазерное оборудование, работаем с&nbsp;учётом индивидуальных особенностей кожи.
                 Каждая процедура начинается с&nbsp;консультации и&nbsp;подбора оптимальных параметров.
               </p>
               <div className="mt-8 flex flex-col gap-3 text-sm text-soft">
@@ -201,10 +231,11 @@ export default function App() {
               <div className="relative overflow-hidden">
                 <img
                   src="/images/about-skin.jpg"
-                  alt="Процедура ухода за кожей"
+                  alt="Процедура ухода за кожей в студии Bella Me"
                   className="aspect-[4/3] w-full object-cover"
                   loading="lazy"
                 />
+                <p className="absolute bottom-3 left-3 text-xs text-white/80 drop-shadow">Процедура в нашей студии</p>
               </div>
               <div className="bg-paper p-8">
                 <p className="font-display text-2xl italic leading-snug text-ink">
@@ -222,8 +253,8 @@ export default function App() {
                   <span className="label text-faint">сеансов</span>
                 </div>
                 <div className="flex flex-col items-center gap-1 p-5 text-center">
-                  <span className="font-display text-3xl text-accent">98%</span>
-                  <span className="label text-faint">рекомендуют</span>
+                  <span className="font-display text-3xl text-accent">22</span>
+                  <span className="label text-faint">отзыва</span>
                 </div>
               </div>
             </div>
