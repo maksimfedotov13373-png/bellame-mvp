@@ -33,8 +33,8 @@ const services = [
 
 const CHECKER_QUESTIONS = [
   { id: "age", text: "Вам уже есть 18 лет?", blockIf: true },
-  { id: "pregnancy", text: "Нет беременности или лактации?", blockIf: true },
-  { id: "skin", text: "Нет кожных заболеваний, герпеса или судорог?", blockIf: true },
+  { id: "pregnancy", text: "Есть беременность или период лактации?", blockIf: false },
+  { id: "skin", text: "Есть кожные заболевания, герпес или судороги?", blockIf: false },
 ]
 
 export default function App() {
