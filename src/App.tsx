@@ -70,8 +70,8 @@ export default function App() {
           <div className="absolute top-0 right-0 h-[80vh] w-[60vw] bg-gradient-to-bl from-accent/8 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 h-[50vh] w-[40vw] bg-gradient-to-tr from-paper-deep to-transparent" />
         </div>
-        <div className="container-x flex min-h-[85vh] flex-col justify-center py-20 md:min-h-[90vh]">
-          <div className="max-w-2xl">
+        <div className="container-x grid min-h-[85vh] items-center py-20 md:min-h-[90vh] md:grid-cols-2 md:gap-12">
+          <div>
             <motion.p {...r(0)} className="label text-accent">
               Студия эпиляции — г.&nbsp;Саратов
             </motion.p>
@@ -98,6 +98,17 @@ export default function App() {
               </a>
             </motion.div>
           </div>
+          <motion.div {...r(0.15)} className="relative hidden md:block">
+            <div className="relative aspect-[4/5] overflow-hidden">
+              <img
+                src="/images/hero-beauty.jpg"
+                alt="Процедура в студии Bella Me"
+                className="h-full w-full object-cover"
+                loading="eager"
+              />
+            </div>
+            <div className="absolute -inset-3 -z-10 bg-gradient-to-tr from-accent/10 to-transparent" />
+          </motion.div>
         </div>
       </section>
 
@@ -187,6 +198,14 @@ export default function App() {
               </div>
             </div>
             <div className="flex flex-col gap-6" {...r(0.1)}>
+              <div className="relative overflow-hidden">
+                <img
+                  src="/images/about-skin.jpg"
+                  alt="Процедура ухода за кожей"
+                  className="aspect-[4/3] w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
               <div className="bg-paper p-8">
                 <p className="font-display text-2xl italic leading-snug text-ink">
                   &laquo;Придам твоей коже ту нежность, к&nbsp;которой хочется прикасаться&raquo;
