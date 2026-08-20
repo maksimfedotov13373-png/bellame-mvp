@@ -349,25 +349,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* ── Stats ── */}
-      <section className="hairline-t hairline-b">
-        <div className="container-x py-6 md:py-8">
-          <div className="grid grid-cols-2 gap-px md:grid-cols-4">
-            {[
-              { value: "7+", label: "лет опыта" },
-              { value: "5 000+", label: "сеансов" },
-              { value: "22", label: "отзыва на Avito" },
-              { value: "100%", label: "стерильность" },
-            ].map((s, i) => (
-              <motion.div key={s.label} className="flex flex-col items-center gap-1 p-5 text-center md:p-7" {...r(0.06 * i)}>
-                <span className="font-display text-2xl text-accent md:text-3xl">{s.value}</span>
-                <span className="label text-faint">{s.label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── Services ── */}
       <section id="services">
         <div className="container-x py-20 md:py-28">
@@ -473,102 +454,66 @@ export default function App() {
         </div>
       </section>
 
-      {/* ── Preparation ── */}
-      <section id="prep">
-        <div className="container-x py-20 md:py-28">
-          <div className="mb-14 max-w-xl" {...r(0)}>
-            <span className="label text-accent">Подготовка</span>
-            <h2 className="mt-4">Как подготовиться к&nbsp;сеансу</h2>
-            <p className="mt-4 text-soft">
-              Следуйте рекомендациям для&nbsp;лучшего результата и&nbsp;комфорта во&nbsp;время процедуры.
-            </p>
-          </div>
-
+      {/* ── Reference ── */}
+      <section id="prep" className="bg-paper-deep">
+        <div className="container-x py-16 md:py-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
-            <div {...r(0.05)}>
-              <h3 className="mb-6 text-accent">До процедуры</h3>
-              <div>
-                {PRE_CARE.map((item, i) => (
-                    <div key={i} className="hairline-t py-5">
-                      <div className="flex items-baseline gap-4">
-                        <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
-                        <div className="max-w-[56ch]">
-                          <p className="text-sm leading-relaxed">{item.text}</p>
-                          {item.note && (
-                            <p className="mt-1.5 text-xs italic text-soft">* {item.note}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+            <div {...r(0)}>
+              <span className="label text-accent">Справка</span>
+              <h2 className="mt-4">Подготовка и&nbsp;противопоказания</h2>
+              <p className="mt-4 text-soft">
+                Краткий список для&nbsp;тех, кто предпочитает прочитать самостоятельно.
+                Для персональных рекомендаций — воспользуйтесь проверкой выше.
+              </p>
+              <div className="mt-8">
+                <h3 className="mb-3 text-sm font-medium">До сеанса</h3>
+                <ul className="flex flex-col gap-2 text-sm text-soft">
+                  <li>За 3–4 недели — исключить воск, сахар, пинцет</li>
+                  <li>За 7 дней — исключить загар</li>
+                  <li>За 3–4 дня — без бани, сауны, пилингов</li>
+                  <li>За сутки — сбрить волосы бритвой</li>
+                  <li>В день сеанса — без косметики в зоне эпиляции</li>
+                </ul>
+              </div>
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-medium">После сеанса</h3>
+                <ul className="flex flex-col gap-2 text-sm text-soft">
+                  <li>7 дней — без солярия и загара (SPF 50)</li>
+                  <li>2–3 дня — без бани, скрабов, мочалок</li>
+                  <li>1–2 дня — без горячей ванны и спиртосодержащих средств</li>
+                </ul>
+              </div>
+            </div>
+            <div {...r(0.1)}>
+              <h3 className="mb-4 text-sm font-medium">Противопоказания</h3>
+              <div className="mb-6">
+                <span className="label mb-3 inline-block text-accent">Абсолютные</span>
+                <ul className="flex flex-col gap-1.5 text-sm text-soft">
+                  {ABSOLUTE_CONTRA.map((c) => (
+                    <li key={c.id} className="flex items-start gap-2">
+                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-accent/40" />
+                      {c.text}
+                    </li>
                   ))}
-              </div>
-            </div>
-
-            <div {...r(0.1)}>
-              <h3 className="mb-6 text-accent">После процедуры</h3>
-              <div>
-                {AFTER_CARE.map((item, i) => (
-                  <div key={i} className="hairline-t py-5">
-                    <div className="flex items-baseline gap-4">
-                      <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
-                      <p className="max-w-[56ch] text-sm leading-relaxed">{item.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Contraindications ── */}
-      <section className="bg-paper-deep">
-        <div className="container-x py-20 md:py-28">
-          <div className="mb-14 max-w-xl" {...r(0)}>
-            <span className="label text-accent">Важно знать</span>
-            <h2 className="mt-4">Противопоказания</h2>
-            <p className="mt-4 text-soft">
-              Ознакомьтесь со&nbsp;списком противопоказаний перед записью. Если есть сомнения — сообщите мастеру.
-            </p>
-          </div>
-
-          <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-            <div {...r(0.05)}>
-              <div className="mb-5 flex items-baseline gap-3">
-                <span className="label text-accent">Абсолютные</span>
-                <span className="label text-faint">процедура не проводится</span>
+                </ul>
               </div>
               <div>
-                {ABSOLUTE_CONTRA.map((c, i) => (
-                  <div key={c.id} className="hairline-t flex items-baseline gap-4 py-4">
-                    <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
-                    <p className="text-sm leading-relaxed">{c.text}</p>
-                  </div>
-                ))}
+                <span className="label mb-3 inline-block text-faint">Относительные</span>
+                <ul className="flex flex-col gap-1.5 text-sm text-soft">
+                  {RELATIVE_CONTRA.map((c) => (
+                    <li key={c.id} className="flex items-start gap-2">
+                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-faint/40" />
+                      {c.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-accent-tint mt-8 px-5 py-4">
+                <p className="text-sm leading-relaxed text-ink">
+                  Есть сомнения? Проконсультируйтесь с&nbsp;мастером перед записью.
+                </p>
               </div>
             </div>
-
-            <div {...r(0.1)}>
-              <div className="mb-5 flex items-baseline gap-3">
-                <span className="label text-faint">Относительные</span>
-                <span className="label text-faint">уточнить у мастера</span>
-              </div>
-              <div>
-                {RELATIVE_CONTRA.map((c, i) => (
-                  <div key={c.id} className="hairline-t flex items-baseline gap-4 py-4">
-                    <span className="label shrink-0 text-faint">{String(i + 1).padStart(2, "0")}</span>
-                    <p className="text-sm leading-relaxed">{c.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-accent-tint mt-12 px-6 py-5">
-            <p className="text-sm leading-relaxed text-ink">
-              Если у&nbsp;вас есть сомнения — обязательно проконсультируйтесь с&nbsp;мастером перед процедурой.
-              Ваша безопасность — наш приоритет.
-            </p>
           </div>
         </div>
       </section>
